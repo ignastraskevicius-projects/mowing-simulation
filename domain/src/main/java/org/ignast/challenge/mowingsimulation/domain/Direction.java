@@ -27,4 +27,12 @@ public enum Direction {
     };
 
     public abstract Location getNextLocationFrom(Location currentDirection);
+
+    public Direction getDiretionAfterTurning90DegreesLeft() {
+        return Direction.values()[(ordinal() + 4 - 1) % 4];
+    }
+
+    public Direction getDiretionAfterTurning90DegreesRight() {
+        return Direction.values()[(ordinal() + 1) % 4];
+    }
 }

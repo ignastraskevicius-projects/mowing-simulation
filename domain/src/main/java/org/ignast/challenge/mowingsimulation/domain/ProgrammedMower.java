@@ -1,5 +1,8 @@
 package org.ignast.challenge.mowingsimulation.domain;
 
+import static org.ignast.challenge.mowingsimulation.domain.Command.GO_FORWARD;
+import static org.ignast.challenge.mowingsimulation.domain.Command.TURN_LEFT;
+
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -38,13 +41,23 @@ public class ProgrammedMower {
     }
 
     public Movement performNextMove() {
-        val newLocation = currentDirection.getNextLocationFrom(currentLocation);
-        if (lawn.isWithinLawn(newLocation)) {
-            Movement movement = new Movement(currentLocation, newLocation);
-            previousLocation = Optional.of(currentLocation);
-            currentLocation = newLocation;
-            return movement;
+        val currentCommand = pendingCommands.poll();
+        if (currentCommand.equals(GO_FORWARD)) {
+            val newLocation = currentDirection.getNextLocationFrom(currentLocation);
+            if (lawn.isWithinLawn(newLocation)) {
+                Movement movement = new Movement(currentLocation, newLocation);
+                previousLocation = Optional.of(currentLocation);
+                currentLocation = newLocation;
+                return movement;
+            } else {
+                return new Movement(currentLocation, currentLocation);
+            }
         } else {
+            if (currentCommand.equals(TURN_LEFT)) {
+                currentDirection = currentDirection.getDiretionAfterTurning90DegreesLeft();
+            } else {
+                currentDirection = currentDirection.getDiretionAfterTurning90DegreesRight();
+            }
             return new Movement(currentLocation, currentLocation);
         }
     }
