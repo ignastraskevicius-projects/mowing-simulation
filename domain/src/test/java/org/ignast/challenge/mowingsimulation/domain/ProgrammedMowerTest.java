@@ -133,6 +133,62 @@ class ProgrammedMowerTest {
     }
 
     @Test
+    public void shouldBeAbleToRevertAfterTurningLeft() {
+        Location initialLocation = new Location(1, 1);
+        val mower = new ProgrammedMower(
+            new Lawn(3, 3),
+            initialLocation,
+            EAST,
+            new Command[] { GO_FORWARD, TURN_LEFT }
+        );
+
+        mower.performNextMove();
+        mower.performNextMove();
+        assertThatIllegalStateException().isThrownBy(() -> mower.revertLastMove());
+    }
+
+    @Test
+    public void shouldBeAbleToRevertAfterTurningRight() {
+        Location initialLocation = new Location(1, 1);
+        val mower = new ProgrammedMower(
+            new Lawn(3, 3),
+            initialLocation,
+            EAST,
+            new Command[] { GO_FORWARD, TURN_LEFT }
+        );
+
+        mower.performNextMove();
+        mower.performNextMove();
+        assertThatIllegalStateException().isThrownBy(() -> mower.revertLastMove());
+    }
+
+    @Test
+    public void shouldIndicateThatMowersProgramHasFinished() {
+        val mower = new ProgrammedMower(new Lawn(0, 0), new Location(0, 0), EAST, new Command[0]);
+
+        assertThat(mower.hasFinishedProgram()).isTrue();
+    }
+
+    @Test
+    public void mowerWithFinishedProgramShouldFailToPerformNextMove() {
+        val mower = new ProgrammedMower(new Lawn(0, 0), new Location(0, 0), EAST, new Command[0]);
+
+        assertThatIllegalStateException().isThrownBy(() -> mower.performNextMove());
+    }
+
+    @Test
+    public void shouldIndicateThatMoversProgramHasNotYetFinished() {
+        val mower = new ProgrammedMower(
+            new Lawn(0, 0),
+            new Location(0, 0),
+            EAST,
+            new Command[] { GO_FORWARD }
+        );
+
+        assertThat(mower.hasFinishedProgram()).isFalse();
+    }
+
+    @Test
     public void shouldBeAbleToTurnLeft() {
         val initialLocation = new Location(2, 1);
         val mower = new ProgrammedMower(
@@ -165,33 +221,33 @@ class ProgrammedMowerTest {
     public void shouldBeAbleToTurnRight() {
         val initialLocation = new Location(1, 1);
         val mower = new ProgrammedMower(
-                new Lawn(4, 4),
-                initialLocation,
-                WEST,
-                new Command[] {
-                        TURN_RIGHT,
-                        GO_FORWARD,
-                        TURN_RIGHT,
-                        GO_FORWARD,
-                        TURN_RIGHT,
-                        GO_FORWARD,
-                        TURN_RIGHT,
-                        GO_FORWARD,
-                }
+            new Lawn(4, 4),
+            initialLocation,
+            WEST,
+            new Command[] {
+                TURN_RIGHT,
+                GO_FORWARD,
+                TURN_RIGHT,
+                GO_FORWARD,
+                TURN_RIGHT,
+                GO_FORWARD,
+                TURN_RIGHT,
+                GO_FORWARD,
+            }
         );
 
         Stream
-                .of(new Location(1, 2), new Location(2, 2), new Location(2, 1), new Location(1, 1))
-                .forEach(expectedLocation -> {
-                    mower.performNextMove();
-                    val movement = mower.performNextMove();
+            .of(new Location(1, 2), new Location(2, 2), new Location(2, 1), new Location(1, 1))
+            .forEach(expectedLocation -> {
+                mower.performNextMove();
+                val movement = mower.performNextMove();
 
-                    assertThat(movement.locationTo()).isEqualTo(expectedLocation);
-                });
+                assertThat(movement.locationTo()).isEqualTo(expectedLocation);
+            });
     }
 
     @Test
-    public void shouldBeAbleToRevertLastMoveForward() {
+    public void shouldNotBeAbleToRevertLastMoveForward() {
         Arrays
             .stream(Direction.values())
             .forEach(direction -> {
@@ -212,7 +268,7 @@ class ProgrammedMowerTest {
     }
 
     @Test
-    public void shouldNotBeAbleToRevert2MovesForward() {
+    public void shouldNotNotBeAbleToRevert2MovesForward() {
         Arrays
             .stream(Direction.values())
             .forEach(direction -> {
