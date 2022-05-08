@@ -218,6 +218,25 @@ class ProgrammedMowerTest {
     }
 
     @Test
+    public void shouldIndicateDirection() {
+        val initialLocation = new Location(0, 0);
+        val mower = new ProgrammedMower(
+            new Lawn(0, 0),
+            initialLocation,
+            EAST,
+            new Command[] { TURN_LEFT, TURN_LEFT, TURN_LEFT, TURN_LEFT }
+        );
+
+        Stream
+            .of(NORTH, WEST, SOUTH, EAST)
+            .forEach(expectedDirection -> {
+                mower.performNextMove();
+
+                assertThat(mower.currentDirection()).isEqualTo(expectedDirection);
+            });
+    }
+
+    @Test
     public void shouldBeAbleToTurnRight() {
         val initialLocation = new Location(1, 1);
         val mower = new ProgrammedMower(

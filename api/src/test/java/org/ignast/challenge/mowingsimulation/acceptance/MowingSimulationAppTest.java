@@ -47,7 +47,7 @@ public class MowingSimulationAppTest {
             """
                 1 1
                 0 0 N
-                FL
+                FR
                 """
         );
 
