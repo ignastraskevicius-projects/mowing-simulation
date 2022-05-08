@@ -10,8 +10,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.NonNull;
+import lombok.ToString;
 import lombok.val;
 
+@ToString
 public class ProgrammedMower {
 
     private final Lawn lawn;
@@ -89,5 +91,9 @@ public class ProgrammedMower {
 
     public boolean hasFinishedProgram() {
         return pendingCommands.isEmpty();
+    }
+
+    public Direction currentDirection() {
+        return currentDirection;
     }
 }
