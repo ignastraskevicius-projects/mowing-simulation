@@ -41,23 +41,35 @@ public class ProgrammedMower {
     }
 
     public Movement performNextMove() {
+        if (pendingCommands.isEmpty()) {
+            throw new IllegalStateException("Mover has already finished its program");
+        }
         val currentCommand = pendingCommands.poll();
         if (currentCommand.equals(GO_FORWARD)) {
-            val newLocation = currentDirection.getNextLocationFrom(currentLocation);
-            if (lawn.isWithinLawn(newLocation)) {
-                Movement movement = new Movement(currentLocation, newLocation);
-                previousLocation = Optional.of(currentLocation);
-                currentLocation = newLocation;
-                return movement;
-            } else {
-                return new Movement(currentLocation, currentLocation);
-            }
+            return goForward();
         } else {
-            if (currentCommand.equals(TURN_LEFT)) {
-                currentDirection = currentDirection.getDiretionAfterTurning90DegreesLeft();
-            } else {
-                currentDirection = currentDirection.getDiretionAfterTurning90DegreesRight();
-            }
+            return turn(currentCommand);
+        }
+    }
+
+    private Movement turn(Command currentCommand) {
+        if (currentCommand.equals(TURN_LEFT)) {
+            currentDirection = currentDirection.getDiretionAfterTurning90DegreesLeft();
+        } else {
+            currentDirection = currentDirection.getDiretionAfterTurning90DegreesRight();
+        }
+        previousLocation = Optional.empty();
+        return new Movement(currentLocation, currentLocation);
+    }
+
+    private Movement goForward() {
+        val newLocation = currentDirection.getNextLocationFrom(currentLocation);
+        if (lawn.isWithinLawn(newLocation)) {
+            Movement movement = new Movement(currentLocation, newLocation);
+            previousLocation = Optional.of(currentLocation);
+            currentLocation = newLocation;
+            return movement;
+        } else {
             return new Movement(currentLocation, currentLocation);
         }
     }
@@ -73,5 +85,9 @@ public class ProgrammedMower {
             );
         previousLocation = Optional.empty();
         return currentLocation;
+    }
+
+    public boolean hasFinishedProgram() {
+        return pendingCommands.isEmpty();
     }
 }
