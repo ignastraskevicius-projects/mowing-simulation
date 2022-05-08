@@ -1,6 +1,7 @@
 package org.ignast.challenge.mowingsimulation.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.ignast.challenge.mowingsimulation.domain.Command.GO_FORWARD;
 import static org.ignast.challenge.mowingsimulation.domain.Direction.EAST;
@@ -8,6 +9,7 @@ import static org.ignast.challenge.mowingsimulation.domain.Direction.NORTH;
 import static org.ignast.challenge.mowingsimulation.domain.Direction.SOUTH;
 import static org.ignast.challenge.mowingsimulation.domain.Direction.WEST;
 
+import java.util.Arrays;
 import lombok.val;
 import org.junit.jupiter.api.Test;
 
@@ -125,5 +127,63 @@ class ProgrammedMowerTest {
         assertThat(movement.locationFrom()).isEqualTo(initialLocation);
         assertThat(movement.locationTo()).isEqualTo(new Location(2, 1));
         assertThat(mower.currentLocation()).isEqualTo(new Location(2, 1));
+    }
+
+    @Test
+    public void shouldBeAbleToRevertLastMoveForward() {
+        Arrays
+            .stream(Direction.values())
+            .forEach(direction -> {
+                Location initialLocation = new Location(1, 1);
+                val mower = new ProgrammedMower(
+                    new Lawn(3, 3),
+                    initialLocation,
+                    direction,
+                    new Command[] { GO_FORWARD }
+                );
+
+                mower.performNextMove();
+                val location = mower.revertLastMove();
+
+                assertThat(location).isEqualTo(initialLocation);
+                assertThat(mower.currentLocation()).isEqualTo(initialLocation);
+            });
+    }
+
+    @Test
+    public void shouldNotBeAbleToRevert2MovesForward() {
+        Arrays
+            .stream(Direction.values())
+            .forEach(direction -> {
+                Location initialLocation = new Location(1, 1);
+                val mower = new ProgrammedMower(
+                    new Lawn(3, 3),
+                    initialLocation,
+                    direction,
+                    new Command[] { GO_FORWARD, GO_FORWARD }
+                );
+
+                mower.performNextMove();
+                mower.revertLastMove();
+
+                assertThatIllegalStateException().isThrownBy(() -> mower.revertLastMove());
+            });
+    }
+
+    @Test
+    public void shouldNotRevertBeforeExecutingAnyCommand() {
+        Arrays
+            .stream(Direction.values())
+            .forEach(direction -> {
+                Location initialLocation = new Location(1, 1);
+                val mower = new ProgrammedMower(
+                    new Lawn(3, 3),
+                    initialLocation,
+                    direction,
+                    new Command[] { GO_FORWARD }
+                );
+
+                assertThatIllegalStateException().isThrownBy(() -> mower.revertLastMove());
+            });
     }
 }
