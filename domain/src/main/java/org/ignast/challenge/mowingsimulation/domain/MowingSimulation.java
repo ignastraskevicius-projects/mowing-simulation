@@ -11,6 +11,11 @@ import lombok.val;
 
 class MowingSimulation {
 
+    private static final PotentialCollisions NO_COLLISION = new PotentialCollisions(
+        new AtomicBoolean(false),
+        new ConcurrentLinkedQueue<>()
+    );
+
     private final Map<Location, PotentialCollisions> collisionDetectionBoard = new ConcurrentHashMap<>();
 
     private final Set<Location> detectedCollisionLocations = ConcurrentHashMap.newKeySet();
@@ -27,13 +32,22 @@ class MowingSimulation {
         }
         while (!mowers.get(0).hasFinishedProgram()) {
             detectCollisions();
-            detectedCollisionLocations.forEach(location ->
-                collisionDetectionBoard
-                    .get(location)
-                    .mowersAttemptingToEnter()
-                    .forEach(m -> m.revertLastMove())
-            );
+            preventCollisions();
         }
+    }
+
+    private void preventCollisions() {
+        detectedCollisionLocations.forEach(location -> preventCollisionAt(location));
+    }
+
+    private void preventCollisionAt(Location location) {
+        collisionDetectionBoard
+            .getOrDefault(location, NO_COLLISION)
+            .mowersAttemptingToEnter()
+            .forEach(m -> {
+                m.revertLastMove();
+                preventCollisionAt(m.currentLocation());
+            });
     }
 
     private void detectCollisions() {
