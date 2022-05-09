@@ -20,8 +20,6 @@ class MowingSimulation {
 
     private final Map<Location, PotentialCollisions> collisionDetectionBoard = new ConcurrentHashMap<>();
 
-    private final Set<Location> detectedCollisionLocations = ConcurrentHashMap.newKeySet();
-
     private final List<ProgrammedMower> mowersWithPendingPrograms;
 
     public MowingSimulation(final List<ProgrammedMower> mowers) {
@@ -40,8 +38,8 @@ class MowingSimulation {
 
     private void executeNextTimeFrame() {
         markMowersWithFinishedPrograms();
-        detectCollisions();
-        preventCollisions();
+        val detectedCollisionLocations = detectCollisions();
+        preventCollisions(detectedCollisionLocations);
         cleanUpCollisionDetector();
     }
 
@@ -64,7 +62,7 @@ class MowingSimulation {
             .forEach(m -> collisionDetectionBoard.remove(m.currentLocation()));
     }
 
-    private void preventCollisions() {
+    private void preventCollisions(final Set<Location> detectedCollisionLocations) {
         val iterator = detectedCollisionLocations.iterator();
         while (iterator.hasNext()) {
             preventCollisionAt(iterator.next());
@@ -85,21 +83,29 @@ class MowingSimulation {
         }
     }
 
-    private void detectCollisions() {
-        mowersWithPendingPrograms
+    private Set<Location> detectCollisions() {
+        return mowersWithPendingPrograms
             .parallelStream()
-            .forEach(mower -> {
-                val movement = mower.performNextMove();
-                markForCollisionDetection(mower, movement);
-                val potentialCollision = collisionDetectionBoard.get(movement.locationTo());
-                if (
-                    potentialCollision.mowersAttemptingToEnter().size() > 1 ||
-                    potentialCollision.isOccupiedAlready().get() &&
-                    potentialCollision.mowersAttemptingToEnter().size() > 0
-                ) {
-                    detectedCollisionLocations.add(movement.locationTo());
+            .reduce(
+                ConcurrentHashMap.newKeySet(),
+                (detectedCollisionLocations, mower) -> {
+                    val movement = mower.performNextMove();
+                    markForCollisionDetection(mower, movement);
+                    val potentialCollision = collisionDetectionBoard.get(movement.locationTo());
+                    if (
+                        potentialCollision.mowersAttemptingToEnter().size() > 1 ||
+                        potentialCollision.isOccupiedAlready().get() &&
+                        potentialCollision.mowersAttemptingToEnter().size() > 0
+                    ) {
+                        detectedCollisionLocations.add(movement.locationTo());
+                    }
+                    return detectedCollisionLocations;
+                },
+                (a, b) -> {
+                    a.addAll(b);
+                    return a;
                 }
-            });
+            );
     }
 
     private void markForCollisionDetection(ProgrammedMower mower, Movement movement) {
