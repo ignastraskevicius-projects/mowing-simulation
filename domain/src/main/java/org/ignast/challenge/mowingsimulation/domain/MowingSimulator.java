@@ -7,11 +7,6 @@ import org.springframework.stereotype.Component;
 public class MowingSimulator {
 
     public void executeSimulation(List<ProgrammedMower> mowers) {
-        mowers
-            .stream()
-            .forEach(m -> {
-                m.performNextMove();
-                m.performNextMove();
-            });
+        new MowingSimulation(mowers).execute();
     }
 }
