@@ -47,7 +47,7 @@ public class MowingSimulationAppTest {
             """
                 1 1
                 0 0 N
-                FR
+                F
                 """
         );
 
@@ -55,7 +55,7 @@ public class MowingSimulationAppTest {
 
         val result = Files.lines(outputFilePath).collect(Collectors.toUnmodifiableList());
         assertThat(result).hasSize(1);
-        assertThat(result.get(0)).isEqualTo("0 1 E");
+        assertThat(result.get(0)).isEqualTo("0 1 N");
     }
 
     @Test
