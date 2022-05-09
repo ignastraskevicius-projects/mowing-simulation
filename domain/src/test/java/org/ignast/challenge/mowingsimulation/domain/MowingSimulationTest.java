@@ -2,6 +2,7 @@ package org.ignast.challenge.mowingsimulation.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.ignast.challenge.mowingsimulation.domain.Command.GO_FORWARD;
+import static org.ignast.challenge.mowingsimulation.domain.Command.TURN_LEFT;
 import static org.ignast.challenge.mowingsimulation.domain.Command.TURN_RIGHT;
 import static org.ignast.challenge.mowingsimulation.domain.Direction.EAST;
 import static org.ignast.challenge.mowingsimulation.domain.Direction.NORTH;
@@ -149,7 +150,7 @@ class MowingSimulationTest {
     }
 
     @Test
-    public void pastMovementsShouldNotBeTakenIntoAccountWhenCalculatingCurrentPotentialCollisions() {
+    public void pastMovementsForwardShouldNotBeTakenIntoAccountWhenCalculatingCurrentPotentialCollisions() {
         val halfCircle = new Command[] { GO_FORWARD, TURN_RIGHT, GO_FORWARD, TURN_RIGHT };
         val lawn = new Lawn(2, 2);
         val m1 = new ProgrammedMower(lawn, new Location(0, 0), NORTH, halfCircle);
@@ -160,6 +161,65 @@ class MowingSimulationTest {
 
         assertPosition(m1, new Location(1, 1), SOUTH);
         assertPosition(m2, new Location(0, 1), EAST);
+    }
+
+    @Test
+    public void mowersWithFinishedProgramsShouldCreateCollisions() {
+        val lawn = new Lawn(2, 1);
+        val m1 = new ProgrammedMower(lawn, new Location(0, 0), NORTH, new Command[0]);
+        val m2 = new ProgrammedMower(lawn, new Location(1, 0), WEST, new Command[] { GO_FORWARD });
+        List<ProgrammedMower> mowers = List.of(m1, m2);
+
+        new MowingSimulation(mowers).execute();
+
+        assertPosition(m1, new Location(0, 0), NORTH);
+        assertPosition(m2, new Location(1, 0), WEST);
+    }
+
+    @Test
+    public void afterFirstMowersFinishesProgramsSecondShouldContinue() {
+        val lawn = new Lawn(2, 1);
+        val m1 = new ProgrammedMower(lawn, new Location(0, 0), NORTH, new Command[0]);
+        val m2 = new ProgrammedMower(lawn, new Location(1, 0), WEST, new Command[] { TURN_RIGHT });
+        List<ProgrammedMower> mowers = List.of(m1, m2);
+
+        new MowingSimulation(mowers).execute();
+
+        assertPosition(m1, new Location(0, 0), NORTH);
+        assertPosition(m2, new Location(1, 0), NORTH);
+    }
+
+    @Test
+    public void multipleMowersShouldFinishAtDifferentTimes() {
+        val lawn = new Lawn(3, 3);
+        val m1 = new ProgrammedMower(lawn, new Location(0, 0), NORTH, new Command[0]);
+        val m2 = new ProgrammedMower(lawn, new Location(1, 0), NORTH, new Command[] { GO_FORWARD });
+        val m3 = new ProgrammedMower(
+            lawn,
+            new Location(2, 0),
+            NORTH,
+            new Command[] { GO_FORWARD, GO_FORWARD }
+        );
+        List<ProgrammedMower> mowers = List.of(m3, m2, m1);
+
+        new MowingSimulation(mowers).execute();
+
+        assertPosition(m1, new Location(0, 0), NORTH);
+        assertPosition(m2, new Location(1, 1), NORTH);
+        assertPosition(m3, new Location(2, 2), NORTH);
+    }
+
+    @Test
+    public void afterSecondMowersFinishesProgramsFirstShouldContinue() {
+        val lawn = new Lawn(2, 1);
+        val m1 = new ProgrammedMower(lawn, new Location(0, 0), NORTH, new Command[0]);
+        val m2 = new ProgrammedMower(lawn, new Location(1, 0), WEST, new Command[] { TURN_RIGHT });
+        List<ProgrammedMower> mowers = List.of(m2, m1);
+
+        new MowingSimulation(mowers).execute();
+
+        assertPosition(m1, new Location(0, 0), NORTH);
+        assertPosition(m2, new Location(1, 0), NORTH);
     }
 
     @Test

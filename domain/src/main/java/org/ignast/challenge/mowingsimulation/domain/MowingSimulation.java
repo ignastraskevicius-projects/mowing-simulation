@@ -1,7 +1,8 @@
 package org.ignast.challenge.mowingsimulation.domain;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,25 +22,46 @@ class MowingSimulation {
 
     private final Set<Location> detectedCollisionLocations = ConcurrentHashMap.newKeySet();
 
-    private final List<ProgrammedMower> mowers;
+    private final List<ProgrammedMower> mowersWithPendingPrograms;
 
     public MowingSimulation(final List<ProgrammedMower> mowers) {
-        this.mowers = new ArrayList<>(mowers);
+        this.mowersWithPendingPrograms = new ArrayList<>(mowers);
+        Collections.sort(
+            mowersWithPendingPrograms,
+            Comparator.comparingInt(ProgrammedMower::pendingCommandsCount)
+        );
     }
 
     public void execute() {
-        if (mowers.isEmpty()) {
-            return;
+        while (!mowersWithPendingPrograms.isEmpty()) {
+            executeNextTimeFrame();
         }
-        while (!mowers.get(0).hasFinishedProgram()) {
-            detectCollisions();
-            preventCollisions();
-            cleanUpCollisionDetector();
+    }
+
+    private void executeNextTimeFrame() {
+        markMowersWithFinishedPrograms();
+        detectCollisions();
+        preventCollisions();
+        cleanUpCollisionDetector();
+    }
+
+    private void markMowersWithFinishedPrograms() {
+        val iterator = mowersWithPendingPrograms.iterator();
+        while (iterator.hasNext()) {
+            val mower = iterator.next();
+            if (mower.hasFinishedProgram()) {
+                markForCollisionDetection(mower, Movement.createInPlace(mower.currentLocation()));
+                iterator.remove();
+            } else {
+                break;
+            }
         }
     }
 
     private void cleanUpCollisionDetector() {
-        mowers.parallelStream().forEach(m -> collisionDetectionBoard.remove(m.currentLocation()));
+        mowersWithPendingPrograms
+            .parallelStream()
+            .forEach(m -> collisionDetectionBoard.remove(m.currentLocation()));
     }
 
     private void preventCollisions() {
@@ -64,7 +86,7 @@ class MowingSimulation {
     }
 
     private void detectCollisions() {
-        mowers
+        mowersWithPendingPrograms
             .parallelStream()
             .forEach(mower -> {
                 val movement = mower.performNextMove();
