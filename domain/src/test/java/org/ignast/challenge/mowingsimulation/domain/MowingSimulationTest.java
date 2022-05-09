@@ -32,6 +32,24 @@ class MowingSimulationTest {
         assertPosition(m4, new Location(0, 1), EAST);
     }
 
+    @Test
+    public void shouldDoNothingFor0MowerSimulation() {
+        new MowingSimulation(List.of()).execute();
+    }
+
+    @Test
+    public void shouldAvoidCollisionOf2MowersMovingToSameLocationAtOnce() {
+        val forward = new Command[] { GO_FORWARD };
+        val m1 = new ProgrammedMower(new Lawn(1, 3), new Location(0, 0), NORTH, forward);
+        val m2 = new ProgrammedMower(new Lawn(1, 3), new Location(0, 2), SOUTH, forward);
+        List<ProgrammedMower> mowers = List.of(m1, m2);
+
+        new MowingSimulation(mowers).execute();
+
+        assertPosition(m1, new Location(0, 0), NORTH);
+        assertPosition(m2, new Location(0, 2), SOUTH);
+    }
+
     private void assertPosition(ProgrammedMower mower, Location location, Direction direction) {
         assertThat(mower.currentLocation()).isEqualTo(location);
         assertThat(mower.currentDirection()).isEqualTo(direction);
