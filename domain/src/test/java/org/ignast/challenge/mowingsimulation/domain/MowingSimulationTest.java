@@ -149,7 +149,7 @@ class MowingSimulationTest {
     }
 
     @Test
-    public void pastMovementsShouldNotCausePotentialCollisions() {
+    public void pastMovementsShouldNotBeTakenIntoAccountWhenCalculatingCurrentPotentialCollisions() {
         val halfCircle = new Command[] { GO_FORWARD, TURN_RIGHT, GO_FORWARD, TURN_RIGHT };
         val lawn = new Lawn(2, 2);
         val m1 = new ProgrammedMower(lawn, new Location(0, 0), NORTH, halfCircle);
@@ -160,6 +160,29 @@ class MowingSimulationTest {
 
         assertPosition(m1, new Location(1, 1), SOUTH);
         assertPosition(m2, new Location(0, 1), EAST);
+    }
+
+    @Test
+    public void pastCollisionLocationsShouldNotBeTakenIntoAccountWhenCalculatingCurrentPotentialCollisions() {
+        val lawn = new Lawn(1, 3);
+        val m1 = new ProgrammedMower(
+            lawn,
+            new Location(0, 0),
+            NORTH,
+            new Command[] { GO_FORWARD, GO_FORWARD }
+        );
+        val m2 = new ProgrammedMower(
+            lawn,
+            new Location(0, 2),
+            SOUTH,
+            new Command[] { GO_FORWARD, TURN_RIGHT }
+        );
+        List<ProgrammedMower> mowers = List.of(m1, m2);
+
+        new MowingSimulation(mowers).execute();
+
+        assertPosition(m1, new Location(0, 1), NORTH);
+        assertPosition(m2, new Location(0, 2), WEST);
     }
 
     private void assertPosition(ProgrammedMower mower, Location location, Direction direction) {
