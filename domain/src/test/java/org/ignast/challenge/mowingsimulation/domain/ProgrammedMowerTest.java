@@ -37,6 +37,24 @@ class ProgrammedMowerTest {
     }
 
     @Test
+    public void shouldIndicateNumberOfCommandsLeftToExecute() {
+        val anyLocation = new Location(0, 0);
+        val anyLawn = new Lawn(3, 3);
+        assertThat(
+            new ProgrammedMower(anyLawn, anyLocation, SOUTH, new Command[] { GO_FORWARD })
+                .pendingCommandsCount()
+        )
+            .isEqualTo(1);
+        assertThat(new ProgrammedMower(anyLawn, anyLocation, SOUTH, new Command[0]).pendingCommandsCount())
+            .isEqualTo(0);
+        assertThat(
+            new ProgrammedMower(anyLawn, anyLocation, SOUTH, new Command[] { TURN_LEFT, TURN_RIGHT })
+                .pendingCommandsCount()
+        )
+            .isEqualTo(2);
+    }
+
+    @Test
     public void shouldNotMoveOutsideTheBoardToTheSouth() {
         Location initialLocation = new Location(1, 0);
         val mower = new ProgrammedMower(new Lawn(3, 3), initialLocation, SOUTH, new Command[] { GO_FORWARD });

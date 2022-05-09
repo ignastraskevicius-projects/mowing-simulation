@@ -96,4 +96,8 @@ public class ProgrammedMower {
     public Direction currentDirection() {
         return currentDirection;
     }
+
+    public int pendingCommandsCount() {
+        return pendingCommands.size();
+    }
 }

@@ -17,4 +17,12 @@ class MovementTest {
     public void shouldNotIndicateLocationChangeWhenThereIsNo() {
         assertThat(new Movement(new Location(0, 0), new Location(0, 0)).hasLocationChanged()).isFalse();
     }
+
+    @Test
+    public void shouldCreateInPlaceMovement() {
+        Movement inPlace = Movement.createInPlace(new Location(1, 2));
+
+        assertThat(inPlace.locationFrom()).isEqualTo(inPlace.locationTo());
+        assertThat(inPlace.locationFrom()).isEqualTo(new Location(1, 2));
+    }
 }
