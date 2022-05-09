@@ -3,12 +3,15 @@ package org.ignast.challenge.mowingsimulation.domain;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
 import lombok.val;
 
 class MowingSimulation {
@@ -28,6 +31,10 @@ class MowingSimulation {
             mowersWithPendingPrograms,
             Comparator.comparingInt(ProgrammedMower::pendingCommandsCount)
         );
+        val distinctLocationsCount = mowersWithPendingPrograms.stream().map(m -> m.currentLocation()).collect(Collectors.toCollection(HashSet::new)).size();
+        if (distinctLocationsCount !=mowers.size()) {
+            throw new IllegalArgumentException("Movers provided contains mowers in overlapping locations");
+        }
     }
 
     public void execute() {
