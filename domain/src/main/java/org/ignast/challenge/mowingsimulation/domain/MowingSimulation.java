@@ -1,7 +1,6 @@
 package org.ignast.challenge.mowingsimulation.domain;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,7 +33,12 @@ class MowingSimulation {
         while (!mowers.get(0).hasFinishedProgram()) {
             detectCollisions();
             preventCollisions();
+            cleanUpCollisionDetector();
         }
+    }
+
+    private void cleanUpCollisionDetector() {
+        mowers.parallelStream().forEach(m -> collisionDetectionBoard.remove(m.currentLocation()));
     }
 
     private void preventCollisions() {
