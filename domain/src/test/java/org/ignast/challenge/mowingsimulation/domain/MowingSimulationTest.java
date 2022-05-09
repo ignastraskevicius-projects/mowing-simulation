@@ -95,6 +95,23 @@ class MowingSimulationTest {
         assertPosition(m2, new Location(0, 0), NORTH);
     }
 
+    @Test
+    public void preventCollisionShouldPreventIndirectlyAffectedMowersAsWell() {
+        val forward = new Command[] { GO_FORWARD };
+        val m1 = new ProgrammedMower(new Lawn(1, 5), new Location(0, 4), SOUTH, forward);
+        val m2 = new ProgrammedMower(new Lawn(1, 5), new Location(0, 3), SOUTH, forward);
+        val m3 = new ProgrammedMower(new Lawn(1, 5), new Location(0, 1), NORTH, forward);
+        val m4 = new ProgrammedMower(new Lawn(1, 5), new Location(0, 0), NORTH, forward);
+        List<ProgrammedMower> mowers = List.of(m1, m2, m3, m4);
+
+        new MowingSimulation(mowers).execute();
+
+        assertPosition(m1, new Location(0, 4), SOUTH);
+        assertPosition(m2, new Location(0, 3), SOUTH);
+        assertPosition(m3, new Location(0, 1), NORTH);
+        assertPosition(m4, new Location(0, 0), NORTH);
+    }
+
     private void assertPosition(ProgrammedMower mower, Location location, Direction direction) {
         assertThat(mower.currentLocation()).isEqualTo(location);
         assertThat(mower.currentDirection()).isEqualTo(direction);
