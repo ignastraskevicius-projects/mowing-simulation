@@ -1,6 +1,7 @@
 package org.ignast.challenge.mowingsimulation.domain;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,7 +43,11 @@ class MowingSimulation {
     }
 
     private void preventCollisions() {
-        detectedCollisionLocations.forEach(location -> preventCollisionAt(location));
+        val iterator = detectedCollisionLocations.iterator();
+        while (iterator.hasNext()) {
+            preventCollisionAt(iterator.next());
+            iterator.remove();
+        }
     }
 
     private void preventCollisionAt(Location location) {
