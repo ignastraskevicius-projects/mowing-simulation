@@ -112,6 +112,42 @@ class MowingSimulationTest {
         assertPosition(m4, new Location(0, 0), NORTH);
     }
 
+    @Test
+    public void preventFirstCollisionWhichIsIndirectlyInvolvedInSecondCollision() {
+        val forward = new Command[] { GO_FORWARD };
+        val lawn = new Lawn(2, 3);
+        val m1 = new ProgrammedMower(lawn, new Location(0, 1), EAST, forward);
+        val m2 = new ProgrammedMower(lawn, new Location(1, 0), NORTH, forward);
+        val m3 = new ProgrammedMower(lawn, new Location(1, 1), NORTH, forward);
+        val m4 = new ProgrammedMower(lawn, new Location(0, 2), EAST, forward);
+        List<ProgrammedMower> mowers = List.of(m1, m2, m3, m4);
+
+        new MowingSimulation(mowers).execute();
+
+        assertPosition(m1, new Location(0, 1), EAST);
+        assertPosition(m2, new Location(1, 0), NORTH);
+        assertPosition(m3, new Location(1, 1), NORTH);
+        assertPosition(m4, new Location(0, 2), EAST);
+    }
+
+    @Test
+    public void preventSecondCollisionWhichIsIndirectlyInvolvedInFirstCollision() {
+        val forward = new Command[] { GO_FORWARD };
+        val lawn = new Lawn(2, 3);
+        val m1 = new ProgrammedMower(lawn, new Location(0, 1), EAST, forward);
+        val m2 = new ProgrammedMower(lawn, new Location(1, 0), NORTH, forward);
+        val m3 = new ProgrammedMower(lawn, new Location(1, 1), NORTH, forward);
+        val m4 = new ProgrammedMower(lawn, new Location(0, 2), EAST, forward);
+        List<ProgrammedMower> mowers = List.of(m3, m4, m1, m2);
+
+        new MowingSimulation(mowers).execute();
+
+        assertPosition(m1, new Location(0, 1), EAST);
+        assertPosition(m2, new Location(1, 0), NORTH);
+        assertPosition(m3, new Location(1, 1), NORTH);
+        assertPosition(m4, new Location(0, 2), EAST);
+    }
+
     private void assertPosition(ProgrammedMower mower, Location location, Direction direction) {
         assertThat(mower.currentLocation()).isEqualTo(location);
         assertThat(mower.currentDirection()).isEqualTo(direction);
