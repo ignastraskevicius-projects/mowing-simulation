@@ -1,6 +1,8 @@
 package org.ignast.challenge.mowingsimulation.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.ignast.challenge.mowingsimulation.domain.Command.GO_FORWARD;
 import static org.ignast.challenge.mowingsimulation.domain.Command.TURN_LEFT;
 import static org.ignast.challenge.mowingsimulation.domain.Command.TURN_RIGHT;
@@ -14,6 +16,19 @@ import lombok.val;
 import org.junit.jupiter.api.Test;
 
 class MowingSimulationTest {
+
+    @Test
+    public void shouldNotCreateSimulationWithNullMowers() {
+        assertThatNullPointerException().isThrownBy(() -> new MowingSimulation(List.of(null)));
+    }
+
+    @Test
+    public void shouldNotCreateSimulationWithOverlappingMowers() {
+        val m1 = new ProgrammedMower(new Lawn(2, 2), new Location(0, 0), NORTH, new Command[0]);
+        val m2 = new ProgrammedMower(new Lawn(2, 2), new Location(0, 0), EAST, new Command[0]);
+
+        assertThatIllegalArgumentException().isThrownBy(() -> new MowingSimulation(List.of(m1, m2)));
+    }
 
     @Test
     public void shouldSimulateNotCollidingMowersFollowingEachOther1Move() {
