@@ -3,15 +3,17 @@ package org.ignast.challenge.mowingsimulation.domain;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import lombok.val;
 
 class MowingSimulation {
 
     private final Map<Location, PotentialCollisions> collisionDetectionBoard = new ConcurrentHashMap<>();
+
+    private final Set<Location> detectedCollisionLocations = ConcurrentHashMap.newKeySet();
 
     private final List<ProgrammedMower> mowers;
 
@@ -24,18 +26,17 @@ class MowingSimulation {
             return;
         }
         while (!mowers.get(0).hasFinishedProgram()) {
-            AtomicReference<Location> collision = detectCollisions();
-            if (collision.get() != null) {
+            detectCollisions();
+            detectedCollisionLocations.forEach(location ->
                 collisionDetectionBoard
-                    .get(collision.get())
+                    .get(location)
                     .mowersAttemptingToEnter()
-                    .forEach(m -> m.revertLastMove());
-            }
+                    .forEach(m -> m.revertLastMove())
+            );
         }
     }
 
-    private AtomicReference<Location> detectCollisions() {
-        AtomicReference<Location> collision = new AtomicReference<>();
+    private void detectCollisions() {
         mowers
             .parallelStream()
             .forEach(mower -> {
@@ -47,10 +48,9 @@ class MowingSimulation {
                     potentialCollision.isOccupiedAlready().get() &&
                     potentialCollision.mowersAttemptingToEnter().size() > 0
                 ) {
-                    collision.set(movement.locationTo());
+                    detectedCollisionLocations.add(movement.locationTo());
                 }
             });
-        return collision;
     }
 
     private void markForCollisionDetection(ProgrammedMower mower, Movement movement) {

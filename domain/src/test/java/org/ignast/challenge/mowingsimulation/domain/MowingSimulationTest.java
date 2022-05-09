@@ -2,7 +2,6 @@ package org.ignast.challenge.mowingsimulation.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.ignast.challenge.mowingsimulation.domain.Command.GO_FORWARD;
-import static org.ignast.challenge.mowingsimulation.domain.Command.TURN_LEFT;
 import static org.ignast.challenge.mowingsimulation.domain.Command.TURN_RIGHT;
 import static org.ignast.challenge.mowingsimulation.domain.Direction.EAST;
 import static org.ignast.challenge.mowingsimulation.domain.Direction.NORTH;
@@ -38,7 +37,7 @@ class MowingSimulationTest {
     }
 
     @Test
-    public void shouldAvoidColliding2MowersMovingToSameLocationAtOnce() {
+    public void shouldPreventColliding2MowersMovingToSameLocationAtOnce() {
         val forward = new Command[] { GO_FORWARD };
         val m1 = new ProgrammedMower(new Lawn(1, 3), new Location(0, 0), NORTH, forward);
         val m2 = new ProgrammedMower(new Lawn(1, 3), new Location(0, 2), SOUTH, forward);
@@ -51,7 +50,25 @@ class MowingSimulationTest {
     }
 
     @Test
-    public void shouldAvoidColliding2MowersFirstMovingIntoSecond() {
+    public void shouldPreventMultipleUnrelatedCollisions() {
+        val forward = new Command[] { GO_FORWARD };
+        val m1 = new ProgrammedMower(new Lawn(2, 3), new Location(0, 0), NORTH, forward);
+        val m2 = new ProgrammedMower(new Lawn(2, 3), new Location(0, 2), SOUTH, forward);
+        val m3 = new ProgrammedMower(new Lawn(2, 3), new Location(1, 0), NORTH, forward);
+        val m4 = new ProgrammedMower(new Lawn(2, 3), new Location(1, 2), SOUTH, forward);
+
+        List<ProgrammedMower> mowers = List.of(m1, m2, m3, m4);
+
+        new MowingSimulation(mowers).execute();
+
+        assertPosition(m1, new Location(0, 0), NORTH);
+        assertPosition(m2, new Location(0, 2), SOUTH);
+        assertPosition(m3, new Location(1, 0), NORTH);
+        assertPosition(m4, new Location(1, 2), SOUTH);
+    }
+
+    @Test
+    public void shouldPreventColliding2MowersFirstMovingIntoSecond() {
         val forward = new Command[] { GO_FORWARD };
         val turn = new Command[] { TURN_RIGHT };
         val m1 = new ProgrammedMower(new Lawn(1, 2), new Location(0, 0), NORTH, forward);
@@ -65,7 +82,7 @@ class MowingSimulationTest {
     }
 
     @Test
-    public void shouldAvoidColliding2MowersSecondMovingIntoFirst() {
+    public void shouldPreventColliding2MowersSecondMovingIntoFirst() {
         val forward = new Command[] { GO_FORWARD };
         val turn = new Command[] { TURN_RIGHT };
         val m1 = new ProgrammedMower(new Lawn(1, 2), new Location(0, 1), SOUTH, turn);
