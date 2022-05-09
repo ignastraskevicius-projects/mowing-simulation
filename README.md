@@ -18,5 +18,6 @@ java -jar api/target/api-1.0-SNAPSHOT-jar-with-dependencies.jar api/mowerProgram
 #### Usage
 
 Input file is called 'mowerProgram.input' located at api module root
+
 Output file will be named 'mowerProgram.output' located at the same directory once program finishes its execution
 
