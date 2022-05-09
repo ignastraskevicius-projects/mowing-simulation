@@ -13,7 +13,10 @@ A program simulating predefined mower movements in a rectangular surface accordi
 
 ### 2. Run
 
+java -jar api/target/api-1.0-SNAPSHOT-jar-with-dependencies.jar api/mowerProgram.input
+
 #### Usage
 
-Input file is called 'input.file' located at api module root
+Input file is called 'mowerProgram.input' located at api module root
+Output file will be named 'mowerProgram.output' located at the same directory once program finishes its execution
 
