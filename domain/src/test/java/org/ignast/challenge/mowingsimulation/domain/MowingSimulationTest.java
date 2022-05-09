@@ -16,20 +16,20 @@ import org.junit.jupiter.api.Test;
 class MowingSimulationTest {
 
     @Test
-    public void shouldSimulateNotCollidingMowers() {
-        val clockwiseHalfCircle = new Command[] { GO_FORWARD, TURN_RIGHT, GO_FORWARD, TURN_RIGHT };
-        val m1 = new ProgrammedMower(new Lawn(2, 2), new Location(0, 0), NORTH, clockwiseHalfCircle);
-        val m2 = new ProgrammedMower(new Lawn(2, 2), new Location(0, 1), EAST, clockwiseHalfCircle);
-        val m3 = new ProgrammedMower(new Lawn(2, 2), new Location(1, 1), SOUTH, clockwiseHalfCircle);
-        val m4 = new ProgrammedMower(new Lawn(2, 2), new Location(1, 0), WEST, clockwiseHalfCircle);
+    public void shouldSimulateNotCollidingMowersFollowingEachOther1Move() {
+        val forward = new Command[] { GO_FORWARD };
+        val m1 = new ProgrammedMower(new Lawn(2, 2), new Location(0, 0), NORTH, forward);
+        val m2 = new ProgrammedMower(new Lawn(2, 2), new Location(0, 1), EAST, forward);
+        val m3 = new ProgrammedMower(new Lawn(2, 2), new Location(1, 1), SOUTH, forward);
+        val m4 = new ProgrammedMower(new Lawn(2, 2), new Location(1, 0), WEST, forward);
         List<ProgrammedMower> mowers = List.of(m1, m2, m3, m4);
 
         new MowingSimulation(mowers).execute();
 
-        assertPosition(m1, new Location(1, 1), SOUTH);
-        assertPosition(m2, new Location(1, 0), WEST);
-        assertPosition(m3, new Location(0, 0), NORTH);
-        assertPosition(m4, new Location(0, 1), EAST);
+        assertPosition(m1, new Location(0, 1), NORTH);
+        assertPosition(m2, new Location(1, 1), EAST);
+        assertPosition(m3, new Location(1, 0), SOUTH);
+        assertPosition(m4, new Location(0, 0), WEST);
     }
 
     @Test
@@ -38,7 +38,7 @@ class MowingSimulationTest {
     }
 
     @Test
-    public void shouldAvoidCollisionOf2MowersMovingToSameLocationAtOnce() {
+    public void shouldAvoidColliding2MowersMovingToSameLocationAtOnce() {
         val forward = new Command[] { GO_FORWARD };
         val m1 = new ProgrammedMower(new Lawn(1, 3), new Location(0, 0), NORTH, forward);
         val m2 = new ProgrammedMower(new Lawn(1, 3), new Location(0, 2), SOUTH, forward);
@@ -48,6 +48,34 @@ class MowingSimulationTest {
 
         assertPosition(m1, new Location(0, 0), NORTH);
         assertPosition(m2, new Location(0, 2), SOUTH);
+    }
+
+    @Test
+    public void shouldAvoidColliding2MowersFirstMovingIntoSecond() {
+        val forward = new Command[] { GO_FORWARD };
+        val turn = new Command[] { TURN_RIGHT };
+        val m1 = new ProgrammedMower(new Lawn(1, 2), new Location(0, 0), NORTH, forward);
+        val m2 = new ProgrammedMower(new Lawn(1, 2), new Location(0, 1), SOUTH, turn);
+        List<ProgrammedMower> mowers = List.of(m1, m2);
+
+        new MowingSimulation(mowers).execute();
+
+        assertPosition(m1, new Location(0, 0), NORTH);
+        assertPosition(m2, new Location(0, 1), WEST);
+    }
+
+    @Test
+    public void shouldAvoidColliding2MowersSecondMovingIntoFirst() {
+        val forward = new Command[] { GO_FORWARD };
+        val turn = new Command[] { TURN_RIGHT };
+        val m1 = new ProgrammedMower(new Lawn(1, 2), new Location(0, 1), SOUTH, turn);
+        val m2 = new ProgrammedMower(new Lawn(1, 2), new Location(0, 0), NORTH, forward);
+        List<ProgrammedMower> mowers = List.of(m1, m2);
+
+        new MowingSimulation(mowers).execute();
+
+        assertPosition(m1, new Location(0, 1), WEST);
+        assertPosition(m2, new Location(0, 0), NORTH);
     }
 
     private void assertPosition(ProgrammedMower mower, Location location, Direction direction) {

@@ -1,17 +1,17 @@
 package org.ignast.challenge.mowingsimulation.domain;
 
-import lombok.val;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import lombok.val;
 
 class MowingSimulation {
 
-    private final Map<Location, List<ProgrammedMower>> collisionDetectionBoard = new ConcurrentHashMap<>();
+    private final Map<Location, PotentialCollisions> collisionDetectionBoard = new ConcurrentHashMap<>();
 
     private final List<ProgrammedMower> mowers;
 
@@ -22,29 +22,71 @@ class MowingSimulation {
     public void execute() {
         if (mowers.isEmpty()) {
             return;
-        } 
+        }
         while (!mowers.get(0).hasFinishedProgram()) {
-            AtomicReference<Location> collision = new AtomicReference<>();
-            mowers
-                    .parallelStream()
-                    .forEach(mower -> {
-                        val movement = mower.performNextMove();
-                        collisionDetectionBoard.compute(movement.locationTo(), (location, collidingMowers) -> {
-                            if (collidingMowers == null) {
-                                return new ArrayList<>(List.of(mower));
-                            } else {
-                                collidingMowers.add(mower);
-                                return collidingMowers;
-                            }
-                        });
-                        if (collisionDetectionBoard.get(movement.locationTo()).size() > 1) {
-                            collision.set(movement.locationTo());
-                        }
-                    });
+            AtomicReference<Location> collision = detectCollisions();
             if (collision.get() != null) {
-                collisionDetectionBoard.get(collision.get()).forEach(m -> m.revertLastMove());
+                collisionDetectionBoard
+                    .get(collision.get())
+                    .mowersAttemptingToEnter()
+                    .forEach(m -> m.revertLastMove());
             }
         }
+    }
 
+    private AtomicReference<Location> detectCollisions() {
+        AtomicReference<Location> collision = new AtomicReference<>();
+        mowers
+            .parallelStream()
+            .forEach(mower -> {
+                val movement = mower.performNextMove();
+                markForCollisionDetection(mower, movement);
+                val potentialCollision = collisionDetectionBoard.get(movement.locationTo());
+                if (
+                    potentialCollision.mowersAttemptingToEnter().size() > 1 ||
+                    potentialCollision.isOccupiedAlready().get() &&
+                    potentialCollision.mowersAttemptingToEnter().size() > 0
+                ) {
+                    collision.set(movement.locationTo());
+                }
+            });
+        return collision;
+    }
+
+    private void markForCollisionDetection(ProgrammedMower mower, Movement movement) {
+        collisionDetectionBoard.compute(
+            movement.locationTo(),
+            (Location location, PotentialCollisions collidingMowers) -> {
+                if (movement.hasLocationChanged()) {
+                    return addAsAttemptingToEnter(mower, collidingMowers);
+                } else {
+                    return addAsOccupyingAlready(collidingMowers);
+                }
+            }
+        );
+    }
+
+    private PotentialCollisions addAsOccupyingAlready(PotentialCollisions collidingMowers) {
+        if (collidingMowers == null) {
+            return new PotentialCollisions(new AtomicBoolean(true), new ConcurrentLinkedQueue<>());
+        } else {
+            collidingMowers.isOccupiedAlready().set(true);
+            return collidingMowers;
+        }
+    }
+
+    private PotentialCollisions addAsAttemptingToEnter(
+        ProgrammedMower mower,
+        PotentialCollisions collidingMowers
+    ) {
+        if (collidingMowers == null) {
+            return new PotentialCollisions(
+                new AtomicBoolean(false),
+                new ConcurrentLinkedQueue<>(List.of(mower))
+            );
+        } else {
+            collidingMowers.mowersAttemptingToEnter().add(mower);
+            return collidingMowers;
+        }
     }
 }
